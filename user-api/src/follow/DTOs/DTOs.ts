@@ -1,21 +1,30 @@
-import { IsString, IsBoolean, IsOptional } from 'class-validator';
+import { IsUUID, IsNotEmpty } from 'class-validator';
 
 export class CreateFollowDto {
-  @IsString()
+  @IsUUID()
+  @IsNotEmpty()
   follower_id: string;
 
-  @IsString()
+  @IsUUID()
+  @IsNotEmpty()
   followed_id: string;
+}
 
-  @IsOptional()
-  @IsBoolean()
-  isApproved?: boolean;
+export class DeleteFollowDto {
+  @IsUUID()
+  @IsNotEmpty()
+  follower_id: string;
+
+  @IsUUID()
+  @IsNotEmpty()
+  followed_id: string;
 }
 
 export class FollowResponseDto {
   id: string;
   follower_id: string;
   followed_id: string;
+  is_approved: boolean;
   created_at: Date;
-  isApproved: boolean;
+  updated_at: Date;
 }

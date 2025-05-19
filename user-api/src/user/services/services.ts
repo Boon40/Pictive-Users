@@ -1,60 +1,107 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User, Credential } from '../models/models';
-import { RegisterUserDto } from '../DTOs/DTOs';
+import { RegisterUserDto, UserResponseDto, CredentialResponseDto } from '../DTOs/DTOs';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    private userRepository: Repository<User>,
     @InjectRepository(Credential)
-    private readonly credentialRepository: Repository<Credential>,
+    private credentialRepository: Repository<Credential>,
   ) {}
 
-  async registerUser(registerUserDto: RegisterUserDto): Promise<User> {
-    // Hash the password
-    const password_hash = await bcrypt.hash(registerUserDto.password, 10);
+  async registerUser(registerUserDto: RegisterUserDto): Promise<UserResponseDto> {
+    const { email, username, password, is_private = false } = registerUserDto;
 
-    // Create the user entity
-    const user = this.userRepository.create({
-      email: registerUserDto.email,
-      username: registerUserDto.username,
-      is_private: registerUserDto.is_private ?? false,
-    });
-    const savedUser = await this.userRepository.save(user);
-
-    // Create the credential entity
-    const credential = this.credentialRepository.create({
-      password_hash,
-      user_id: savedUser.id,
-    });
-    const savedCredential = await this.credentialRepository.save(credential);
-
-    // Update user with credential_id
-    savedUser.credential_id = savedCredential.id;
-    await this.userRepository.save(savedUser);
-
-    // Attach credential to user for return (optional)
-    savedUser.credential = savedCredential;
-    return savedUser;
-  }
-
-  async getUserById(id: string): Promise<User | null> {
-    return this.userRepository.findOne({ where: { id } });
-  }
-
-  async getCredentialByUserId(userId: string): Promise<Credential> {
-    const credential = await this.credentialRepository.findOne({
-      where: { user_id: userId },
+    // Check if user already exists
+    const existingUser = await this.userRepository.findOne({
+      where: [{ email }, { username }],
     });
 
-    if (!credential) {
-      throw new NotFoundException(`Credential not found for user ${userId}`);
+    if (existingUser) {
+      throw new ConflictException('User with this email or username already exists');
     }
 
-    return credential;
+    // Hash password
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create credential
+    const credential = this.credentialRepository.create({
+      password_hash: hashedPassword,
+    });
+
+    // Save credential first to get its ID
+    const savedCredential = await this.credentialRepository.save(credential);
+
+    // Create user with credential_id
+    const user = this.userRepository.create({
+      email,
+      username,
+      is_private,
+      credential_id: savedCredential.id,
+    });
+
+    // Save user
+    const savedUser = await this.userRepository.save(user);
+
+    // Return user without sensitive data
+    return {
+      id: savedUser.id,
+      email: savedUser.email,
+      username: savedUser.username,
+      is_private: savedUser.is_private,
+      credential_id: savedUser.credential_id,
+      created_at: savedUser.created_at,
+      updated_at: savedUser.updated_at,
+    };
+  }
+
+  async getUserById(id: string): Promise<UserResponseDto[]> {
+    const user = await this.userRepository.findOne({
+      where: { id },
+      relations: ['credential'],
+    });
+
+    if (!user) {
+      return [];
+    }
+
+    return [{
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      is_private: user.is_private,
+      credential_id: user.credential_id,
+      created_at: user.created_at,
+      updated_at: user.updated_at,
+    }];
+  }
+
+  async getCredentialByUserId(userId: string): Promise<CredentialResponseDto[]> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['credential'],
+    });
+
+    if (!user) {
+      return [];
+    }
+
+    const credential = await user.credential;
+    if (!credential) {
+      return [];
+    }
+
+    return [{
+      id: credential.id,
+      password_hash: credential.password_hash,
+      created_at: credential.created_at,
+      updated_at: credential.updated_at,
+    }];
   }
 }

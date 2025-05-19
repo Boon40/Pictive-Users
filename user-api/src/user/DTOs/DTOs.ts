@@ -1,4 +1,4 @@
-import { IsEmail, IsString, IsOptional, IsBoolean, MinLength } from 'class-validator';
+import { IsEmail, IsString, IsOptional, IsBoolean, MinLength, IsUUID } from 'class-validator';
 
 export class RegisterUserDto {
   @IsEmail()
@@ -31,17 +31,32 @@ export class UpdateUserDto {
 }
 
 export class UserResponseDto {
+  @IsUUID()
   id: string;
+
+  @IsEmail()
   email: string;
+
+  @IsString()
   username: string;
+
+  @IsBoolean()
   is_private: boolean;
+
+  @IsUUID()
+  credential_id: string;
+
   created_at: Date;
   updated_at: Date;
 }
 
 export class CredentialResponseDto {
+  @IsUUID()
   id: string;
+
+  @IsString()
+  password_hash: string;
+
   created_at: Date;
   updated_at: Date;
-  user_id: string;
 }

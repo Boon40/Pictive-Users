@@ -1,6 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToOne, JoinColumn } from 'typeorm';
 
-@Entity()
+@Entity('credentials')
 export class Credential {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -14,11 +14,11 @@ export class Credential {
   @UpdateDateColumn()
   updated_at: Date;
 
-  @Column()
-  user_id: string;
+  @OneToOne(() => User, { lazy: true })
+  user: Promise<User>;
 }
 
-@Entity()
+@Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -29,11 +29,10 @@ export class User {
   @Column({ unique: true })
   username: string;
 
-  @OneToOne(() => Credential)
-  @JoinColumn({ name: 'credential_id' })
-  credential: Credential;
+  @Column({ default: false })
+  is_private: boolean;
 
-  @Column({ nullable: true })
+  @Column()
   credential_id: string;
 
   @CreateDateColumn()
@@ -42,6 +41,7 @@ export class User {
   @UpdateDateColumn()
   updated_at: Date;
 
-  @Column({ default: false })
-  is_private: boolean;
-}
+  @OneToOne(() => Credential, { lazy: true })
+  @JoinColumn({ name: 'credential_id' })
+  credential: Promise<Credential>;
+} 

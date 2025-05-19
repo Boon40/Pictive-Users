@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { User } from '../../user/models/models';
 
-@Entity()
+@Entity('follows')
 export class Follow {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -11,9 +12,20 @@ export class Follow {
   @Column()
   followed_id: string;
 
+  @Column({ default: false })
+  is_approved: boolean;
+
   @CreateDateColumn()
   created_at: Date;
 
-  @Column({ default: false })
-  isApproved: boolean;
+  @UpdateDateColumn()
+  updated_at: Date;
+
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'follower_id' })
+  follower: User;
+
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'followed_id' })
+  followed: User;
 }
