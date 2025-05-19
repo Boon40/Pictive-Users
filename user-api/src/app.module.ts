@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { User } from './user/models/models';
+import { Credential } from './user/models/models';
+import { Follow } from './follow/models/models';
 import { UserModule } from './user/user.module';
 import { FollowModule } from './follow/follow.module';
 
@@ -16,13 +17,11 @@ import { FollowModule } from './follow/follow.module';
       username: process.env.DB_USERNAME || 'postgres',
       password: process.env.DB_PASSWORD || 'postgres',
       database: process.env.DB_DATABASE || 'pictive_users',
-      autoLoadEntities: true,
-      synchronize: true, // Set to false in production
+      entities: [User, Credential, Follow],
+      synchronize: true,
     }),
     UserModule,
     FollowModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}
