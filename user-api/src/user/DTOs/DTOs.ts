@@ -1,6 +1,6 @@
 import { IsEmail, IsString, IsOptional, IsBoolean, MinLength } from 'class-validator';
 
-export class CreateUserDto {
+export class RegisterUserDto {
   @IsEmail()
   email: string;
 
@@ -37,4 +37,11 @@ export class UserResponseDto {
   is_private: boolean;
   created_at: Date;
   updated_at: Date;
+}
+
+export class CredentialResponseDto {
+  id: string;
+  created_at: Date;
+  updated_at: Date;
+  user_id: string;
 }
