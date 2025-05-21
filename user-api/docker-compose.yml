@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  user-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=production
+      - PORT=3002
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      - DB_DATABASE=pictive_users
+      - JWT_SECRET=your_jwt_secret
+      - JWT_EXPIRATION=7d
+      - FRONTEND_URL=http://localhost:3000
+    depends_on:
+      - postgres
+    networks:
+      - pictive-network
+
+  postgres:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=pictive_users
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - pictive-network
+
+volumes:
+  postgres_data:
+
+networks:
+  pictive-network:
+    driver: bridge
