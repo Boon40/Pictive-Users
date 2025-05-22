@@ -6,6 +6,7 @@ import { Credential } from './user/models/models';
 import { Follow } from './follow/models/models';
 import { UserModule } from './user/user.module';
 import { FollowModule } from './follow/follow.module';
+import { HealthController } from './health/health.controller';
 
 @Module({
   imports: [
@@ -23,5 +24,7 @@ import { FollowModule } from './follow/follow.module';
     UserModule,
     FollowModule,
   ],
+  controllers: [HealthController],
+  providers: [],
 })
 export class AppModule {}
